@@ -13,54 +13,36 @@ Foundry consists of:
 
 https://book.getfoundry.sh/
 
-## Usage
+## Commands
 
-### Build
+### Setup
 
 ```shell
-$ forge build
+# Install dependencies
+forge install
+
+# Setup env
+cp .env.example .env
+# Edit .env with your private key
 ```
 
-### Test
+### Run Tests
 
 ```shell
-$ forge test
+forge test -vvv
 ```
 
-### Format
+### Local Deployment (Anvil)
+
+1. Start Anvil:
 
 ```shell
-$ forge fmt
+anvil
 ```
 
-### Gas Snapshots
+2. Deploy:
 
 ```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+source .env
+forge script script/DeployLocal.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
