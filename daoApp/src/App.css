@@ -1,42 +1,243 @@
-#root {
-  max-width: 1280px;
+:root {
+  color: #0d1321;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f4f6fb 0%, #eef3ff 100%);
+  border: 1px solid #d8e1ff;
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 40px rgba(13, 19, 33, 0.08);
+  gap: 24px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 12px;
+  color: #4b5ea5;
+  margin: 0 0 8px 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.muted {
+  color: #5f6c7b;
+  margin: 4px 0;
+}
+
+.warning {
+  background: #fff4ec;
+  border: 1px solid #ffd7b8;
+  color: #9b4d1a;
+  padding: 8px 12px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .card {
-  padding: 2em;
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid #e8ecf5;
+  box-shadow: 0 6px 20px rgba(13, 19, 33, 0.05);
 }
 
-.read-the-docs {
-  color: #888;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.label {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #7a8595;
+  margin: 0;
+}
+
+.value {
+  font-size: 20px;
+  margin: 2px 0;
+}
+
+.mono {
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+.pill {
+  background: #eef3ff;
+  color: #2f3d8a;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.status-pill {
+  background: #f7f9fd;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid #e1e7f5;
+  text-align: right;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #d7deea;
+  background: #f9fbff;
+  font-size: 15px;
+}
+
+input:disabled {
+  background: #f1f3f6;
+  cursor: not-allowed;
+}
+
+button {
+  border-radius: 12px;
+  border: 1px solid #d8e1ff;
+  background: white;
+  padding: 12px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover:enabled {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(13, 19, 33, 0.08);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: linear-gradient(135deg, #3046ff, #6b8bff);
+  color: white;
+  border: none;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.actions.split {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proposal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.proposal-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.votes {
+  display: flex;
+  gap: 16px;
+}
+
+.dates {
+  min-width: 240px;
+}
+
+.proposal-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #0d1321;
+  color: white;
+  padding: 14px 18px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  max-width: 360px;
+}
+
+.input-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.connect-card {
+  min-width: 280px;
+}
+
+.small {
+  font-size: 12px;
+}
+
+@media (max-width: 800px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions.split {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .proposal-body {
+    flex-direction: column;
+  }
 }
