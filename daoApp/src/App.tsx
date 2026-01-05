@@ -27,30 +27,21 @@ const AppContent: React.FC = () => {
   const [userBalance, setUserBalance] = useState<bigint>(0n)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [lastProposalId, setLastProposalId] = useState<number | null>(null)
   const [loadingBalances, setLoadingBalances] = useState(false)
 
   const refreshData = useCallback(async () => {
     setLoadingBalances(true)
     try {
       const [daoBal, userBal] = await Promise.all([
-        provider.getBalance(daoAddress),
+        daoRead.getDaoBalance(),
         address ? daoRead.getUserBalance(address) : Promise.resolve(0n),
       ])
       setDaoBalance(BigInt(daoBal))
       setUserBalance(BigInt(userBal ?? 0))
-
-      try {
-        const nextId = await daoRead.nextProposalId()
-        const lastId = Number(BigInt(nextId?.toString?.() ?? nextId ?? 0n) - 1n)
-        setLastProposalId(lastId > 0 ? lastId : null)
-      } catch (err) {
-        setLastProposalId(null)
-      }
     } finally {
       setLoadingBalances(false)
     }
-  }, [address, daoAddress, daoRead, provider])
+  }, [address, daoRead])
 
   useEffect(() => {
     refreshData()
@@ -212,10 +203,10 @@ const AppContent: React.FC = () => {
         <ProposalList
           daoContract={daoRead}
           refreshKey={refreshKey}
-          defaultMaxId={lastProposalId ?? undefined}
           onVote={handleVote}
           onExecute={handleExecute}
           isConnected={isConnected}
+          userAddress={address ?? undefined}
         />
       </main>
       <Toast message={statusMessage} />

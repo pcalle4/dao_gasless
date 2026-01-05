@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import type { Proposal, VoteType } from '../types'
+import type { ProposalState, VoteType } from '../types'
+import { ProposalView } from './ProposalList'
 import { formatEth } from '../web3/format'
 
 interface ProposalCardProps {
-  proposal: Proposal
+  proposal: ProposalView
   onVote: (proposalId: bigint, vote: VoteType) => Promise<boolean>
   onExecute: (proposalId: bigint) => Promise<boolean>
   isConnected: boolean
@@ -19,23 +20,21 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, onVote, onExecute
   const [voting, setVoting] = useState<VoteType | null>(null)
   const [executing, setExecuting] = useState(false)
 
-  const now = Math.floor(Date.now() / 1000)
-  const isActive = now < Number(proposal.deadline) && !proposal.executed
-  const waitingWindow =
-    !proposal.executed &&
-    now >= Number(proposal.deadline) &&
-    now < Number(proposal.executableAt)
-  const canExecute =
-    !proposal.executed &&
-    now >= Number(proposal.executableAt) &&
-    proposal.votesFor > proposal.votesAgainst
+  const isActive = proposal.state === ProposalState.ACTIVE
+  const canExecute = proposal.state === ProposalState.APPROVED
 
-  let status = 'Pendiente'
-  if (proposal.executed) status = 'Ejecutada'
-  else if (isActive) status = 'Activa'
-  else if (waitingWindow) status = 'En espera'
-  else if (proposal.votesFor > proposal.votesAgainst) status = 'Aprobada'
-  else status = 'Rechazada'
+  const statusLabel =
+    proposal.state === ProposalState.ACTIVE
+      ? 'Activa'
+      : proposal.state === ProposalState.WAITING_SECURITY_DELAY
+        ? 'En espera'
+        : proposal.state === ProposalState.APPROVED
+          ? 'Aprobada'
+          : proposal.state === ProposalState.REJECTED
+            ? 'Rechazada'
+            : proposal.state === ProposalState.EXECUTED
+              ? 'Ejecutada'
+              : 'Inexistente'
 
   const handleVote = async (vote: VoteType) => {
     setVoting(vote)
@@ -54,7 +53,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, onVote, onExecute
       <div className="card-header">
         <div>
           <p className="label">Propuesta #{proposal.id.toString()}</p>
-          <p className="value">{status}</p>
+          <p className="value">{statusLabel}</p>
           <p className="muted">Destinatario: {proposal.recipient}</p>
         </div>
         <div className="status-pill">
@@ -81,7 +80,16 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, onVote, onExecute
         <div className="dates">
           <p className="muted">Vence: {formatDate(proposal.deadline)}</p>
           <p className="muted">Ejecutable desde: {formatDate(proposal.executableAt)}</p>
-          <p className="muted">Tu voto: no disponible (se añadirá con getter/evento)</p>
+          <p className="muted">
+            Tu voto:{' '}
+            {proposal.userVote?.hasVoted
+              ? proposal.userVote?.voteType === 0
+                ? 'A FAVOR'
+                : proposal.userVote?.voteType === 1
+                  ? 'EN CONTRA'
+                  : 'ABSTENCIÓN'
+              : 'Aún no has votado'}
+          </p>
         </div>
       </div>
 

@@ -1,6 +1,15 @@
 [
   {
     "inputs": [],
+    "name": "proposalCount",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "fundDao",
     "outputs": [],
     "stateMutability": "payable",
@@ -75,10 +84,34 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "uint256", "name": "proposalId", "type": "uint256" },
+      { "internalType": "address", "name": "user", "type": "address" }
+    ],
+    "name": "getUserVote",
+    "outputs": [
+      { "internalType": "bool", "name": "hasVoted", "type": "bool" },
+      { "internalType": "enum DAOVoting.VoteType", "name": "voteType", "type": "uint8" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
-    "name": "nextProposalId",
+    "name": "getDaoBalance",
     "outputs": [
       { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "proposalId", "type": "uint256" }
+    ],
+    "name": "getProposalState",
+    "outputs": [
+      { "internalType": "uint8", "name": "", "type": "uint8" }
     ],
     "stateMutability": "view",
     "type": "function"

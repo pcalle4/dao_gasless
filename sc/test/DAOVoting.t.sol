@@ -120,6 +120,7 @@ contract DAOVotingTest is Test {
         // userA should succeed (10 / 10.5 > 10%)
         vm.prank(userA);
         dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        assertEq(dao.proposalCount(), 1);
 
         // userB should fail
         vm.prank(userB);
@@ -138,7 +139,7 @@ contract DAOVotingTest is Test {
         vm.prank(userA);
         uint256 deadline = block.timestamp + 1 days;
         dao.createProposal(recipient, 1 ether, deadline);
-        uint256 pId = 1;
+        uint256 pId = dao.proposalCount();
 
         // B votes A_FAVOR (0)
         vm.prank(userB);
@@ -147,6 +148,9 @@ contract DAOVotingTest is Test {
         (,,,, uint256 votesFor, uint256 votesAgainst,,,,) = dao.proposals(pId);
         assertEq(votesFor, 1);
         assertEq(votesAgainst, 0);
+        (bool hasVoted, DAOVoting.VoteType voteType) = dao.getUserVote(pId, userB);
+        assertTrue(hasVoted);
+        assertEq(uint8(voteType), uint8(DAOVoting.VoteType.A_FAVOR));
 
         // B changes to EN_CONTRA (1)
         vm.prank(userB);
@@ -155,6 +159,9 @@ contract DAOVotingTest is Test {
         (,,,, votesFor, votesAgainst,,,,) = dao.proposals(pId);
         assertEq(votesFor, 0); // Decremented
         assertEq(votesAgainst, 1); // Incremented
+        (hasVoted, voteType) = dao.getUserVote(pId, userB);
+        assertTrue(hasVoted);
+        assertEq(uint8(voteType), uint8(DAOVoting.VoteType.EN_CONTRA));
     }
 
     function testVote_revertsAfterDeadline() public {
@@ -254,6 +261,32 @@ contract DAOVotingTest is Test {
         dao.vote(1, DAOVoting.VoteType.A_FAVOR);
     }
 
+    function testGetProposalState_transitions() public {
+        vm.prank(userA); dao.fundDao{value: 10 ether}();
+        vm.prank(userB); dao.fundDao{value: 1 ether}();
+
+        uint256 deadline = block.timestamp + 1 days;
+        vm.prank(userA); dao.createProposal(recipient, 1 ether, deadline);
+
+        // ACTIVE
+        assertEq(dao.getProposalState(1), 1);
+
+        // Vote in favor before deadline
+        vm.prank(userB); dao.vote(1, DAOVoting.VoteType.A_FAVOR);
+
+        // After deadline but before security delay
+        vm.warp(deadline + 1);
+        assertEq(dao.getProposalState(1), 2);
+
+        // After security delay and approved
+        vm.warp(deadline + dao.SECURITY_DELAY() + 1);
+        assertEq(dao.getProposalState(1), 3);
+
+        // Execute and verify EXECUTED
+        dao.executeProposal(1);
+        assertEq(dao.getProposalState(1), 5);
+    }
+
     // --- Gasless Tests ---
 
     function testVote_gasless_viaForwarder_execute() public {
@@ -287,6 +320,9 @@ contract DAOVotingTest is Test {
         // Check Vote Counted
         (,,,, uint256 votesFor,,,,,) = dao.proposals(pId);
         assertEq(votesFor, 1);
+        (bool hasVoted, DAOVoting.VoteType voteType) = dao.getUserVote(pId, userB);
+        assertTrue(hasVoted);
+        assertEq(uint8(voteType), uint8(DAOVoting.VoteType.A_FAVOR));
         
         // Check Nonce Incremented
         assertEq(forwarder.getNonce(userB), 1);

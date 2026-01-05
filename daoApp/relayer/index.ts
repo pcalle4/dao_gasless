@@ -87,21 +87,16 @@ app.post('/api/relay', async (req, res) => {
 app.post('/api/daemon/run-once', async (req, res) => {
   const limit = Number((req.query?.max as string) ?? MAX_PROPOSALS ?? '50') || 50
   const processed: Array<{ id: number; txHash: string }> = []
-  const now = Math.floor(Date.now() / 1000)
+  const countRaw = await dao.proposalCount()
+  const total = Number(BigInt(countRaw?.toString?.() ?? countRaw ?? 0n))
+  const max = Math.min(limit, total)
 
-  for (let i = 1; i <= limit; i++) {
+  for (let i = 1; i <= max; i++) {
     try {
-      const p = await dao.getProposal(i)
-      const createdAt = BigInt(p.createdAt ?? 0)
-      if (createdAt === 0n || p.executed) continue
-
-      const executableAt = BigInt(p.executableAt ?? 0)
-      const votesFor = BigInt(p.votesFor ?? 0)
-      const votesAgainst = BigInt(p.votesAgainst ?? 0)
-
-      const canExecute = now >= Number(executableAt) && votesFor > votesAgainst
-      if (!canExecute) continue
-
+      const stateRaw = await dao.getProposalState(i)
+      const state = Number(stateRaw)
+      // APPROVED = 3
+      if (state !== 3) continue
       const tx = await dao.executeProposal(i)
       await tx.wait()
       processed.push({ id: i, txHash: tx.hash })

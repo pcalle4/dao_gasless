@@ -12,3 +12,17 @@ export interface Proposal {
   createdAt: bigint
   executableAt: bigint
 }
+
+export enum ProposalState {
+  NONEXISTENT = 0,
+  ACTIVE = 1,
+  WAITING_SECURITY_DELAY = 2,
+  APPROVED = 3,
+  REJECTED = 4,
+  EXECUTED = 5,
+}
+
+export interface UserVote {
+  hasVoted: boolean
+  voteType?: VoteType
+}

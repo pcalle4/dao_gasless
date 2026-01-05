@@ -13,7 +13,7 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
 
     uint256 public constant SECURITY_DELAY = 1 hours;
     uint256 public constant MIN_VOTING_BALANCE = 0.01 ether;
-    uint256 public nextProposalId = 1;
+    uint256 public proposalCount;
     uint256 public totalDaoBalance;
 
     struct Proposal {
@@ -37,21 +37,8 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
 
     mapping(address => uint256) public userBalances;
     mapping(uint256 => Proposal) public proposals;
-    // proposalId => user => hasVoted (we need to track vote type to allow changing votes)
-    // To allow changing votes, we need to know the previous vote.
-    // 0: Not Voted (technically we can use struct or mapping(uint=>mapping(address=>VoteStatus)))
-    // Let's use a nested mapping to store the actual vote cast.
-    // But since VoteType is 0-indexed, we need a way to distinguish "Not Voted".
-    // We can add a "HAS_VOTED" boolean or similar, or just reserve a value?
-    // Prompt says: "A_FAVOR, EN_CONTRA, ABSTENCION".
-    // I will store struct { bool hasVoted; VoteType option; }
-
-    struct UserVote {
-        bool hasVoted;
-        VoteType vote;
-    }
-
-    mapping(uint256 => mapping(address => UserVote)) intUserVotes;
+    mapping(uint256 => mapping(address => VoteType)) private _userVote;
+    mapping(uint256 => mapping(address => bool)) private _hasVoted;
 
     // --- Events ---
 
@@ -101,10 +88,6 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
     function createProposal(address recipient, uint256 amount, uint256 deadline) external {
         address sender = _msgSender();
 
-        // 1. Check Creator Threshold: >= 10% of Total DAO Balance at moment of creation.
-        // If total balance is 0, logic says 0 >= 0 is true, but practically usually means no funds.
-        // Let's assume strict > 0 check isn't explicitly asked but "10% of balance" implies balance exists.
-        // However, if total is 100, needs 10. If total 0, needs 0.
         if (userBalances[sender] < (totalDaoBalance * 10) / 100) {
             revert NotAuthorizedToCreate();
         }
@@ -119,7 +102,7 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
             revert InvalidDeadline();
         }
 
-        uint256 pId = nextProposalId++;
+        uint256 pId = ++proposalCount;
         Proposal storage p = proposals[pId];
         p.id = pId;
         p.recipient = recipient;
@@ -148,30 +131,25 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
         if (block.timestamp >= p.deadline) revert VotingEnded();
         if (p.executed) revert AlreadyExecuted();
 
-        UserVote storage uv = intUserVotes[proposalId][sender];
+        VoteType previousVote = _userVote[proposalId][sender];
+        bool hasPrev = _hasVoted[proposalId][sender];
 
-        if (uv.hasVoted) {
-            // Changing Vote
-            if (uv.vote == voteType) {
-                // Same vote, do nothing or revert?
-                // Let's just return to save gas or allow idempotence.
+        if (hasPrev) {
+            if (previousVote == voteType) {
                 return;
             }
 
-            // Undo previous vote
-            if (uv.vote == VoteType.A_FAVOR) p.votesFor--;
-            else if (uv.vote == VoteType.EN_CONTRA) p.votesAgainst--;
+            if (previousVote == VoteType.A_FAVOR) p.votesFor--;
+            else if (previousVote == VoteType.EN_CONTRA) p.votesAgainst--;
             else p.votesAbstain--;
 
-            emit VoteChanged(proposalId, sender, uv.vote, voteType);
+            emit VoteChanged(proposalId, sender, previousVote, voteType);
         } else {
-            // First time voting
-            uv.hasVoted = true;
+            _hasVoted[proposalId][sender] = true;
             emit Voted(proposalId, sender, voteType);
         }
 
-        // Apply new vote
-        uv.vote = voteType;
+        _userVote[proposalId][sender] = voteType;
         if (voteType == VoteType.A_FAVOR) p.votesFor++;
         else if (voteType == VoteType.EN_CONTRA) p.votesAgainst++;
         else p.votesAbstain++;
@@ -217,6 +195,25 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
 
     function getUserBalance(address user) external view returns (uint256) {
         return userBalances[user];
+    }
+
+    function getUserVote(uint256 proposalId, address user) external view returns (bool hasVoted, VoteType voteType) {
+        hasVoted = _hasVoted[proposalId][user];
+        voteType = _userVote[proposalId][user];
+    }
+
+    function getDaoBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function getProposalState(uint256 proposalId) external view returns (uint8) {
+        Proposal storage p = proposals[proposalId];
+        if (p.createdAt == 0) return 0; // NONEXISTENT
+        if (p.executed) return 5; // EXECUTED
+        if (block.timestamp < p.deadline) return 1; // ACTIVE
+        if (block.timestamp < p.executableAt) return 2; // WAITING_SECURITY_DELAY
+        if (p.votesFor > p.votesAgainst) return 3; // APPROVED
+        return 4; // REJECTED
     }
 
     // Explicit override for ERC2771Context context which might conflict if we had other inheritance,
