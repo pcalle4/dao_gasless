@@ -44,7 +44,21 @@ export function useWallet(): WalletState {
     setConnecting(true)
     try {
       const browserProvider = new EthersBrowserProvider(window.ethereum)
-      const accounts = await browserProvider.send('eth_requestAccounts', [])
+      // Intentamos pedir permisos primero para que MetaMask vuelva a mostrar el selector
+      let accounts: string[] = []
+      if (window.ethereum.request) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }],
+          })
+        } catch (_err) {
+          // ignorar, seguimos con la solicitud de cuentas estándar
+        }
+        accounts = (await window.ethereum.request<string[]>({ method: 'eth_requestAccounts' })) ?? []
+      } else {
+        accounts = await browserProvider.send('eth_requestAccounts', [])
+      }
       const signerInstance = await browserProvider.getSigner()
       const network = await browserProvider.getNetwork()
 

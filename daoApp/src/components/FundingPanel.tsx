@@ -6,6 +6,7 @@ interface FundingPanelProps {
   daoBalance: bigint
   userBalance: bigint
   onDeposit: (amountEth: string) => Promise<boolean>
+  onRefresh?: () => void
   loadingBalances?: boolean
   isConnected: boolean
 }
@@ -15,6 +16,7 @@ const FundingPanel: React.FC<FundingPanelProps> = ({
   daoBalance,
   userBalance,
   onDeposit,
+  onRefresh,
   loadingBalances,
   isConnected,
 }) => {
@@ -40,6 +42,11 @@ const FundingPanel: React.FC<FundingPanelProps> = ({
           <p className="label">Tu balance interno</p>
           <p className="value">{formatEth(userBalance)} ETH</p>
           {loadingBalances ? <p className="muted">Actualizando...</p> : null}
+          <div className="input-inline">
+            <button onClick={onRefresh} disabled={loadingBalances}>
+              {loadingBalances ? 'Refrescando...' : 'Refrescar'}
+            </button>
+          </div>
         </div>
       </div>
 

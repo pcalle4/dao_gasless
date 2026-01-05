@@ -178,6 +178,10 @@ const AppContent: React.FC = () => {
           <p className="muted">
             Deposita, crea propuestas y vota vía meta-transacciones con forwarder EIP-2771.
           </p>
+          <p className="muted small">
+            1) Conecta tu wallet y deposita al DAO. 2) Crea propuesta. 3) Vota (gasless) y ejecuta tras
+            el delay de seguridad.
+          </p>
           {chainWarning ? (
             <p className="warning">Conéctate a la red {targetChainId} para operar (actual: {chainId})</p>
           ) : null}
@@ -191,6 +195,7 @@ const AppContent: React.FC = () => {
           daoBalance={daoBalance}
           userBalance={userBalance}
           onDeposit={handleDeposit}
+          onRefresh={refreshData}
           loadingBalances={loadingBalances}
           isConnected={isConnected}
         />
