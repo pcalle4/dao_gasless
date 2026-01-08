@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { ProposalState, VoteType } from '../types'
+import { ProposalState } from '../types'
+import type { VoteType } from '../types'
 import { ProposalView } from './ProposalList'
 import { formatEth } from '../web3/format'
 
@@ -55,6 +56,9 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, onVote, onExecute
           <p className="label">Propuesta #{proposal.id.toString()}</p>
           <p className="value">{statusLabel}</p>
           <p className="muted">Destinatario: {proposal.recipient}</p>
+          {proposal.description ? (
+            <p className="muted">Descripción: {proposal.description}</p>
+          ) : null}
         </div>
         <div className="status-pill">
           <span>Monto</span>

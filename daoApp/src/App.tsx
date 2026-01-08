@@ -80,7 +80,17 @@ const AppContent: React.FC = () => {
   )
 
   const handleCreateProposal = useCallback(
-    async ({ recipient, amountEth, deadline }: { recipient: string; amountEth: string; deadline: number }) => {
+    async ({
+      recipient,
+      amountEth,
+      deadline,
+      description,
+    }: {
+      recipient: string
+      amountEth: string
+      deadline: number
+      description: string
+    }) => {
       if (!daoWrite) {
         setStatusMessage('Conecta tu wallet para crear propuestas')
         return false
@@ -99,9 +109,13 @@ const AppContent: React.FC = () => {
         setStatusMessage('La fecha límite debe ser futura')
         return false
       }
+      if (!description.trim()) {
+        setStatusMessage('La descripción es obligatoria')
+        return false
+      }
       try {
         setStatusMessage('Creando propuesta...')
-        const tx = await daoWrite.createProposal(recipient, amount, BigInt(deadline))
+        const tx = await daoWrite.createProposal(recipient, amount, BigInt(deadline), description.trim())
         await tx.wait()
         setStatusMessage(`Propuesta creada: ${tx.hash}`)
         setRefreshKey((k) => k + 1)

@@ -13,17 +13,20 @@ declare global {
 
 export interface WalletState {
   address: string | null
+  accounts: string[]
   chainId: number | null
   provider: BrowserProvider | null
   signer: JsonRpcSigner | null
   connecting: boolean
   isConnected: boolean
   connect: () => Promise<void>
+  selectAccount: (nextAddress: string) => Promise<void>
   disconnect: () => void
 }
 
 export function useWallet(): WalletState {
   const [address, setAddress] = useState<string | null>(null)
+  const [accounts, setAccounts] = useState<string[]>([])
   const [chainId, setChainId] = useState<number | null>(null)
   const [provider, setProvider] = useState<BrowserProvider | null>(null)
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
@@ -31,6 +34,7 @@ export function useWallet(): WalletState {
 
   const reset = useCallback(() => {
     setAddress(null)
+    setAccounts([])
     setChainId(null)
     setSigner(null)
     setProvider(null)
@@ -64,12 +68,23 @@ export function useWallet(): WalletState {
 
       setProvider(browserProvider)
       setSigner(signerInstance)
+      setAccounts(accounts ?? [])
       setAddress(accounts?.[0] ?? null)
       setChainId(Number(network.chainId))
     } finally {
       setConnecting(false)
     }
   }, [])
+
+  const selectAccount = useCallback(
+    async (nextAddress: string) => {
+      if (!provider) return
+      const signerInstance = await provider.getSigner(nextAddress)
+      setSigner(signerInstance)
+      setAddress(nextAddress)
+    },
+    [provider],
+  )
 
   const disconnect = useCallback(() => {
     reset()
@@ -84,9 +99,13 @@ export function useWallet(): WalletState {
         return
       }
 
-      setAddress(accounts[0])
+      setAccounts(accounts)
+      if (!address || !accounts.includes(address)) {
+        setAddress(accounts[0])
+      }
       if (provider) {
-        provider.getSigner().then(setSigner).catch(() => reset())
+        const nextAddress = address && accounts.includes(address) ? address : accounts[0]
+        provider.getSigner(nextAddress).then(setSigner).catch(() => reset())
       }
     }
 
@@ -96,7 +115,8 @@ export function useWallet(): WalletState {
       if (window.ethereum) {
         const nextProvider = new EthersBrowserProvider(window.ethereum)
         setProvider(nextProvider)
-        nextProvider.getSigner().then(setSigner).catch(() => reset())
+        const nextAddress = address ?? undefined
+        nextProvider.getSigner(nextAddress).then(setSigner).catch(() => reset())
       }
     }
 
@@ -111,12 +131,14 @@ export function useWallet(): WalletState {
 
   return {
     address,
+    accounts,
     chainId,
     provider,
     signer,
     connecting,
     isConnected: Boolean(address),
     connect,
+    selectAccount,
     disconnect,
   }
 }

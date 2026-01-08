@@ -3,7 +3,8 @@ import { useWalletContext } from '../web3/WalletProvider'
 const shortAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
 
 const ConnectWallet: React.FC = () => {
-  const { address, chainId, connect, disconnect, connecting, isConnected } = useWalletContext()
+  const { address, accounts, chainId, connect, disconnect, selectAccount, connecting, isConnected } =
+    useWalletContext()
 
   return (
     <div className="card connect-card">
@@ -13,10 +14,35 @@ const ConnectWallet: React.FC = () => {
           {address ? shortAddress(address) : 'No conectada'}{' '}
           {chainId ? <span className="pill">Chain {chainId}</span> : null}
         </p>
+        {isConnected && accounts.length > 1 ? (
+          <select
+            className="account-select"
+            value={address ?? ''}
+            onChange={(e) => selectAccount(e.target.value)}
+            disabled={connecting}
+          >
+            {accounts.map((acct) => (
+              <option key={acct} value={acct}>
+                {acct}
+              </option>
+            ))}
+          </select>
+        ) : null}
       </div>
-      <button className="primary" onClick={isConnected ? disconnect : connect} disabled={connecting}>
-        {connecting ? 'Conectando...' : isConnected ? 'Desconectar' : 'Conectar MetaMask'}
-      </button>
+      {isConnected ? (
+        <div className="button-row">
+          <button className="primary" onClick={connect} disabled={connecting}>
+            {connecting ? 'Conectando...' : 'Cambiar cuenta'}
+          </button>
+          <button onClick={disconnect} disabled={connecting}>
+            Desconectar
+          </button>
+        </div>
+      ) : (
+        <button className="primary" onClick={connect} disabled={connecting}>
+          {connecting ? 'Conectando...' : 'Conectar MetaMask'}
+        </button>
+      )}
     </div>
   )
 }

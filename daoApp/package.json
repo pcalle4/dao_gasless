@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:relayer": "npm --prefix relayer run dev",
+    "dev:daemon": "npm --prefix relayer run daemon",
+    "dev:all": "node scripts/dev-all.mjs",
+    "dev:all:daemon": "WITH_DAEMON=1 node scripts/dev-all.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

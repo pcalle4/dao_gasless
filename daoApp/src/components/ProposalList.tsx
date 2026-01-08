@@ -21,6 +21,7 @@ const toProposal = (raw: any): Proposal => ({
   id: BigInt(raw.id ?? 0),
   recipient: raw.recipient ?? '',
   amount: BigInt(raw.amount ?? 0),
+  description: raw.description ?? '',
   deadline: BigInt(raw.deadline ?? 0),
   votesFor: BigInt(raw.votesFor ?? 0),
   votesAgainst: BigInt(raw.votesAgainst ?? 0),

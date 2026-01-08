@@ -22,6 +22,7 @@ contract DAOVotingTest is Test {
     uint256 public pkB;
     uint256 public pkC;
     uint256 public pkRelayer;
+    string internal constant DEFAULT_DESCRIPTION = "Test proposal";
 
     // MinimalForwarder.ForwardRequest is defined in MinimalForwarder
 
@@ -119,13 +120,13 @@ contract DAOVotingTest is Test {
 
         // userA should succeed (10 / 10.5 > 10%)
         vm.prank(userA);
-        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
         assertEq(dao.proposalCount(), 1);
 
         // userB should fail
         vm.prank(userB);
         vm.expectRevert(DAOVoting.NotAuthorizedToCreate.selector);
-        dao.createProposal(recipient, 0.1 ether, block.timestamp + 1 days);
+        dao.createProposal(recipient, 0.1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
     }
 
     function testVote_normalAndChangeVoteBeforeDeadline() public {
@@ -138,14 +139,14 @@ contract DAOVotingTest is Test {
         // A creates proposal
         vm.prank(userA);
         uint256 deadline = block.timestamp + 1 days;
-        dao.createProposal(recipient, 1 ether, deadline);
+        dao.createProposal(recipient, 1 ether, deadline, DEFAULT_DESCRIPTION);
         uint256 pId = dao.proposalCount();
 
         // B votes A_FAVOR (0)
         vm.prank(userB);
         dao.vote(pId, DAOVoting.VoteType.A_FAVOR);
 
-        (,,,, uint256 votesFor, uint256 votesAgainst,,,,) = dao.proposals(pId);
+        (,,,,, uint256 votesFor, uint256 votesAgainst,,,,) = dao.proposals(pId);
         assertEq(votesFor, 1);
         assertEq(votesAgainst, 0);
         (bool hasVoted, DAOVoting.VoteType voteType) = dao.getUserVote(pId, userB);
@@ -156,7 +157,7 @@ contract DAOVotingTest is Test {
         vm.prank(userB);
         dao.vote(pId, DAOVoting.VoteType.EN_CONTRA);
 
-        (,,,, votesFor, votesAgainst,,,,) = dao.proposals(pId);
+        (,,,,, votesFor, votesAgainst,,,,) = dao.proposals(pId);
         assertEq(votesFor, 0); // Decremented
         assertEq(votesAgainst, 1); // Incremented
         (hasVoted, voteType) = dao.getUserVote(pId, userB);
@@ -170,7 +171,7 @@ contract DAOVotingTest is Test {
         
         uint256 deadline = block.timestamp + 1 hours;
         vm.prank(userA);
-        dao.createProposal(recipient, 1 ether, deadline);
+        dao.createProposal(recipient, 1 ether, deadline, DEFAULT_DESCRIPTION);
 
         vm.warp(deadline + 1 seconds);
 
@@ -187,7 +188,7 @@ contract DAOVotingTest is Test {
 
         uint256 deadline = block.timestamp + 1 days;
         vm.prank(userA);
-        dao.createProposal(recipient, 5 ether, deadline);
+        dao.createProposal(recipient, 5 ether, deadline, DEFAULT_DESCRIPTION);
 
         // Voting
         vm.prank(userA);
@@ -215,7 +216,7 @@ contract DAOVotingTest is Test {
 
         dao.executeProposal(1);
 
-        (,,,,,,, bool executed,,) = dao.proposals(1);
+        (,,,,,,,, bool executed,,) = dao.proposals(1);
         assertTrue(executed);
         assertEq(recipient.balance, recipientPreBalance + 5 ether);
         assertEq(dao.totalDaoBalance(), daoPreBalance - 5 ether);
@@ -225,7 +226,7 @@ contract DAOVotingTest is Test {
         vm.prank(userA);
         dao.fundDao{value: 10 ether}();
         vm.prank(userA);
-        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
         
         // Case 1: No votes (0 <= 0)
         vm.warp(block.timestamp + 1 days + dao.SECURITY_DELAY() + 1);
@@ -241,7 +242,7 @@ contract DAOVotingTest is Test {
     function testExecuteProposal_revertsIfAlreadyExecuted() public {
         // Setup passing proposal
         vm.prank(userA); dao.fundDao{value: 10 ether}();
-        vm.prank(userA); dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        vm.prank(userA); dao.createProposal(recipient, 1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
         vm.prank(userA); dao.vote(1, DAOVoting.VoteType.A_FAVOR);
         
         vm.warp(block.timestamp + 1 days + dao.SECURITY_DELAY() + 1);
@@ -253,7 +254,7 @@ contract DAOVotingTest is Test {
 
     function testVote_revertsIfBalanceInsufficient() public {
         vm.prank(userA); dao.fundDao{value: 10 ether}();
-        vm.prank(userA); dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        vm.prank(userA); dao.createProposal(recipient, 1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
         
         // userC has 0 deposited
         vm.prank(userC);
@@ -266,7 +267,7 @@ contract DAOVotingTest is Test {
         vm.prank(userB); dao.fundDao{value: 1 ether}();
 
         uint256 deadline = block.timestamp + 1 days;
-        vm.prank(userA); dao.createProposal(recipient, 1 ether, deadline);
+        vm.prank(userA); dao.createProposal(recipient, 1 ether, deadline, DEFAULT_DESCRIPTION);
 
         // ACTIVE
         assertEq(dao.getProposalState(1), 1);
@@ -295,7 +296,7 @@ contract DAOVotingTest is Test {
         vm.prank(userB); dao.fundDao{value: 1 ether}();
         
         vm.prank(userA);
-        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days);
+        dao.createProposal(recipient, 1 ether, block.timestamp + 1 days, DEFAULT_DESCRIPTION);
         uint256 pId = 1;
 
         // Construct Request for userB
@@ -318,7 +319,7 @@ contract DAOVotingTest is Test {
         assertTrue(success, "Forwarder execution failed");
 
         // Check Vote Counted
-        (,,,, uint256 votesFor,,,,,) = dao.proposals(pId);
+        (,,,,, uint256 votesFor,,,,,) = dao.proposals(pId);
         assertEq(votesFor, 1);
         (bool hasVoted, DAOVoting.VoteType voteType) = dao.getUserVote(pId, userB);
         assertTrue(hasVoted);

@@ -2,7 +2,12 @@ import { useMemo, useState } from 'react'
 import { formatEth } from '../web3/format'
 
 interface CreateProposalProps {
-  onCreate: (params: { recipient: string; amountEth: string; deadline: number }) => Promise<boolean>
+  onCreate: (params: {
+    recipient: string
+    amountEth: string
+    deadline: number
+    description: string
+  }) => Promise<boolean>
   daoBalance: bigint
   userBalance: bigint
   isConnected: boolean
@@ -17,6 +22,7 @@ const CreateProposal: React.FC<CreateProposalProps> = ({
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [deadline, setDeadline] = useState('')
+  const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const creationThreshold = useMemo(
@@ -28,12 +34,13 @@ const CreateProposal: React.FC<CreateProposalProps> = ({
   const handleSubmit = async () => {
     const deadlineTs = Math.floor(new Date(deadline).getTime() / 1000)
     setSubmitting(true)
-    const ok = await onCreate({ recipient, amountEth: amount, deadline: deadlineTs })
+    const ok = await onCreate({ recipient, amountEth: amount, deadline: deadlineTs, description })
     setSubmitting(false)
     if (ok) {
       setRecipient('')
       setAmount('')
       setDeadline('')
+      setDescription('')
     }
   }
 
@@ -94,11 +101,32 @@ const CreateProposal: React.FC<CreateProposalProps> = ({
             disabled={!isConnected || submitting}
           />
         </div>
+        <div>
+          <label className="label" htmlFor="description">
+            Descripción
+          </label>
+          <textarea
+            id="description"
+            placeholder="Describe el objetivo de la propuesta"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={!isConnected || submitting}
+            rows={3}
+          />
+        </div>
         <div className="actions">
           <button
             className="primary"
             onClick={handleSubmit}
-            disabled={!isConnected || submitting || !recipient || !amount || !deadline || !canCreate}
+            disabled={
+              !isConnected ||
+              submitting ||
+              !recipient ||
+              !amount ||
+              !deadline ||
+              !description ||
+              !canCreate
+            }
           >
             {submitting ? 'Creando...' : 'Crear propuesta'}
           </button>

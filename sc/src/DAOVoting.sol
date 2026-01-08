@@ -20,6 +20,7 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
         uint256 id;
         address recipient;
         uint256 amount;
+        string description;
         uint256 deadline;
         uint256 votesFor;
         uint256 votesAgainst;
@@ -44,7 +45,12 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
 
     event Funded(address indexed from, uint256 amount);
     event ProposalCreated(
-        uint256 indexed id, address indexed creator, address indexed recipient, uint256 amount, uint256 deadline
+        uint256 indexed id,
+        address indexed creator,
+        address indexed recipient,
+        uint256 amount,
+        uint256 deadline,
+        string description
     );
     event Voted(uint256 indexed id, address indexed voter, VoteType voteType);
     event VoteChanged(uint256 indexed id, address indexed voter, VoteType previous, VoteType current);
@@ -85,7 +91,7 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
      * @param amount Amount of ETH to transfer.
      * @param deadline Timestamp when voting ends.
      */
-    function createProposal(address recipient, uint256 amount, uint256 deadline) external {
+    function createProposal(address recipient, uint256 amount, uint256 deadline, string calldata description) external {
         address sender = _msgSender();
 
         if (userBalances[sender] < (totalDaoBalance * 10) / 100) {
@@ -107,12 +113,13 @@ contract DAOVoting is ERC2771Context, ReentrancyGuard {
         p.id = pId;
         p.recipient = recipient;
         p.amount = amount;
+        p.description = description;
         p.deadline = deadline;
         p.createdAt = block.timestamp;
         p.executableAt = deadline + SECURITY_DELAY;
         // executed initialized to false
 
-        emit ProposalCreated(pId, sender, recipient, amount, deadline);
+        emit ProposalCreated(pId, sender, recipient, amount, deadline, description);
     }
 
     /**

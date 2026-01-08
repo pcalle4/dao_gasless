@@ -4,6 +4,7 @@ export interface Proposal {
   id: bigint
   recipient: string
   amount: bigint
+  description: string
   deadline: bigint
   votesFor: bigint
   votesAgainst: bigint
